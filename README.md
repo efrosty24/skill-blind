@@ -1,12 +1,60 @@
-# React + Vite
+# SkillBlind
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application for bias-free hiring through anonymized applicant submissions.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Applicant submission form
+- Recruiter dashboard
+- Job listings scraper
+- Contact unlock flow
+- Modern UI with Tailwind CSS
 
-## Expanding the ESLint configuration
+## Development Setup
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   cd backend
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example`
+4. Start the development servers:
+
+   ```bash
+   # Terminal 1 (Frontend)
+   npm run dev
+
+   # Terminal 2 (Backend)
+   cd backend
+   npm run dev
+   ```
+
+## Deployment
+
+This application is deployed on Vercel. To deploy your own instance:
+
+1. Fork this repository
+2. Create a new project on Vercel
+3. Import your forked repository
+4. Configure environment variables in the Vercel dashboard:
+   - `VITE_API_URL`: Your production API URL
+   - `NODE_ENV`: Set to "production"
+   - `FRONTEND_URL`: Your production frontend URL
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+VITE_API_URL=https://your-api-url/api
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+```
+
+For production, set these variables in your Vercel dashboard.
+
+## License
+
+MIT
