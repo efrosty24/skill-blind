@@ -7,17 +7,34 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configure CORS for production
+// Enhanced CORS configuration for production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, 'https://skill-blind.vercel.app'] 
     : 'http://localhost:5173',
-  methods: ['GET', 'POST'],
-  credentials: true
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
 };
 
+// Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Function to scrape Indeed jobs
 async function scrapeIndeedJobs(keyword = 'software engineer', location = 'remote') {
@@ -26,7 +43,8 @@ async function scrapeIndeedJobs(keyword = 'software engineer', location = 'remot
     const response = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+      },
+      timeout: 10000 // 10 second timeout
     });
 
     const $ = cheerio.load(response.data);
@@ -54,8 +72,8 @@ async function scrapeIndeedJobs(keyword = 'software engineer', location = 'remot
 
     return jobs;
   } catch (error) {
-    console.error('Error scraping Indeed:', error);
-    return [];
+    console.error('Error scraping Indeed:', error.message);
+    throw new Error('Failed to fetch jobs from Indeed');
   }
 }
 
@@ -98,27 +116,24 @@ async function scrapeLinkedInJobs(keyword = 'software engineer', location = 'rem
   }
 }
 
-// API endpoint to get jobs
+// API Routes
 app.get('/api/jobs', async (req, res) => {
   try {
     const { keyword = 'software engineer', location = 'remote' } = req.query;
-    
-    // Scrape jobs from both sources
-    const indeedJobs = await scrapeIndeedJobs(keyword, location);
-    const linkedInJobs = await scrapeLinkedInJobs(keyword, location);
-    
-    // Combine and shuffle the results
-    const allJobs = [...indeedJobs, ...linkedInJobs]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 20); // Limit to 20 jobs total
-
-    res.json(allJobs);
+    const jobs = await scrapeIndeedJobs(keyword, location);
+    res.json(jobs);
   } catch (error) {
-    console.error('Error fetching jobs:', error);
-    res.status(500).json({ error: 'Failed to fetch jobs' });
+    console.error('Error in /api/jobs:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+// Start server
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel
+module.exports = app; 
